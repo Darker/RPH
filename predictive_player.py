@@ -54,6 +54,7 @@ class MyPlayer(player.MyPlayer):
             boards.append(board)
         else:
             move_index = 0
+            #board_place = board.place
             for move in available_moves:
                 if not haz_tim(start_time, timeout):
                    break

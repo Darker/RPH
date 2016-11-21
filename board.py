@@ -161,12 +161,13 @@ class Board:
             return 0
         return 1 if plrscore>enemyscore else -1
     def clone(self):
-        board = []
-        for row in self.board:
+        board = [row[:] for row in self.board]
+        
+        #for row in self.board:
             #tmp = []
             #for number in row:
             #   tmp.append(number)
-            board.append(row[:])
+        #    board.append(row[:])
             
         result =  Board(board)
         result.stones = self.stones[:]
@@ -195,13 +196,14 @@ class Board:
         # these:
         #   fields = []
         ended_properly = False
+        board = self.board
         #while self.isValidPos(pos):
         # While condition replaced with inline
         # because just as any other interpreted language
         # python sucks at inlining
         while pos[0]>=0 and pos[1]>=0 and pos[0]<self.rows and pos[1]<self.cols:
             #current_color = self[pos];
-            current_color = self.board[pos[0]][pos[1]]
+            current_color = board[pos[0]][pos[1]]
             if first_iteration:
                 #opponent_color = player.opponent_color
                 if current_color != player.opponent_color:
