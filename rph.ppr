@@ -1,0 +1,46 @@
+[Config]
+Compilator.FileName=C:\cygwin64\bin\python2.7.exe
+Compilator.PSPar=%File%
+Compilator.DefaultDir=%Dir%
+Compilator.SaveAll=1
+Compilator.Capture=1
+Compilator.ParsLog=%SFile "%F", line %L%E
+Compilator.HideOutput=0
+Compilator.ProgSaveAll=0
+Compilator.ProgRunSelection=0
+Compilator.LogType=1
+DefaultCPIndex=0
+LogtoEnd=1
+DontOpen=0
+AbsolutePath=0
+FileFormat=0
+ProjectFilesOnly=0
+[Project tree]
+rph
+	+HW
+		+01
+			01_DU\vectors.py
+[Open project files]
+0=01_DU\vectors.py
+1=U:\tomsicek\4orbitalniLaser\src\main.cpp
+2=U:\tomsicek\4orbitalniLaser\src\socket_echo.cpp
+3=U:\tomsicek\4orbitalniLaser\src\socket_echo.h
+4=..\PRP\HW\PRPHW\makehw.py
+[Selected Project Files]
+Main=
+Selected=01_DU\vectors.py
+[01_DU\vectors.py]
+TopLine=1
+Caret=47,14
+[U:\tomsicek\4orbitalniLaser\src\main.cpp]
+TopLine=1
+Caret=1,1
+[U:\tomsicek\4orbitalniLaser\src\socket_echo.cpp]
+TopLine=1
+Caret=1,1
+[U:\tomsicek\4orbitalniLaser\src\socket_echo.h]
+TopLine=1
+Caret=1,1
+[..\PRP\HW\PRPHW\makehw.py]
+TopLine=1
+Caret=28,9
