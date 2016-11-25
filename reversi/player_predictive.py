@@ -1,10 +1,10 @@
-import player
+from player_abstract import MyPlayer as AbstractPlayer
 # for analysing how much time remaining does the player have to think
 import time
 # for infinity. Infinity is cool
 import math
 
-class MyPlayer(player.MyPlayer):
+class MyPlayer(AbstractPlayer):
     '''This is player that tries to predict what the score will be next turn or more turns after that
        and picks option that yields best score when all enemy moves are just as likely
     '''
@@ -30,11 +30,11 @@ class MyPlayer(player.MyPlayer):
         #calls += 1
         # the `scores` is used for caching the turned stones to speed
         # up the algorighm
-        available_moves, scores = player.get_positions_and_scores(board, False)
+        available_moves, scores = board.get_positions_and_scores(player, False)
         # this is slightly more optimal than checking player.can_play
         if len(available_moves)==0:
             player = self if player!=self else self.enemy
-            available_moves, scores = player.get_positions_and_scores(board, False)
+            available_moves, scores = board.get_positions_and_scores(player, False)
             #playerskip+=1
             #print("PLAYERSKIP! "+str(playerskip)+" / "+str(calls))
         # array of end results in the form of 1, -1 or zero based on 

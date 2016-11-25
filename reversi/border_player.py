@@ -5,7 +5,7 @@ class MyPlayer(player.MyPlayer):
     especially corner stones. That's because once you've got corner stone
     it will never be reversed'''
     def find_position(self, board):
-        coords, scores = self.get_positions_and_scores(board)
+        coords, scores = board.get_positions_and_scores(self)
         if len(scores) > 0:
             # First try to find corner stones
             for pos in coords:

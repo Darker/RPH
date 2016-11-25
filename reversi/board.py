@@ -1,3 +1,4 @@
+#from __future__ import print_function
 # for copying boards 
 import copy
 
@@ -91,6 +92,29 @@ class Board:
     def is_valid_move(self, pos, player):
         turned_fields = self.get_claim_stones(pos, player)
         return len(turned_fields)!=0
+    # This gives number of valid moves and
+    # lists of stones which will change color (placed stone not included)
+    # by default, second list just contains count of those stones
+    def get_positions_and_scores(self, player, score_as_len=True):
+        coords = []
+        # contains list lists o stone coordinates
+        # length of values can be used to calculate score
+        scores = []
+        board = self.board
+        row = 0
+        while row<self.rows:
+            col = 0
+            while col<self.cols:
+                if(board[row][col] == player.colors[player.NEUTRAL]):
+                    #print("Testing ["+str(row)+", "+str(col)+"]")
+                    score = self.get_claim_stones([row, col], player)
+                    if len(score)>0:
+                        coords.append([row, col])
+                        scores.append(len(score) if score_as_len else score)
+                        #print("Placing stone at ["+str(row)+", "+str(col)+"] yields "+str(score))
+                col+=1
+            row+=1
+        return (coords, scores)
     # Returns list of stones turned by placing stone at `stone_pos`
     # if empty list is returned that move is not valid!
     #@profile
