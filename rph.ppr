@@ -21,26 +21,10 @@ rph
 		+01
 			01_DU\vectors.py
 [Open project files]
-0=01_DU\vectors.py
-1=U:\tomsicek\4orbitalniLaser\src\main.cpp
-2=U:\tomsicek\4orbitalniLaser\src\socket_echo.cpp
-3=U:\tomsicek\4orbitalniLaser\src\socket_echo.h
-4=..\PRP\HW\PRPHW\makehw.py
+0=Novy1.txt
 [Selected Project Files]
 Main=
-Selected=01_DU\vectors.py
-[01_DU\vectors.py]
-TopLine=1
-Caret=47,14
-[U:\tomsicek\4orbitalniLaser\src\main.cpp]
+Selected=Novy1.txt
+[Novy1.txt]
 TopLine=1
 Caret=1,1
-[U:\tomsicek\4orbitalniLaser\src\socket_echo.cpp]
-TopLine=1
-Caret=1,1
-[U:\tomsicek\4orbitalniLaser\src\socket_echo.h]
-TopLine=1
-Caret=1,1
-[..\PRP\HW\PRPHW\makehw.py]
-TopLine=1
-Caret=28,9

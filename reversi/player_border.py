@@ -1,6 +1,6 @@
-import player
+import player_abstract
 
-class MyPlayer(player.MyPlayer):
+class MyPlayer(player_abstract.MyPlayer):
     '''This is "border player". It always prefers to pick border and 
     especially corner stones. That's because once you've got corner stone
     it will never be reversed'''

@@ -1,21 +1,5 @@
-#from __future__ import print_function
-from board import Board
-from player_abstract import MyPlayer as AbstractPlayer
 
-class MyPlayer(AbstractPlayer):
-    '''Tento hrac vzdy sebere tolik kamenu, kolik muze. Bez planovani.'''
-    # Finds the most suitable position for placing a stone
-    # best position is such that yields most turned stones after execution
-    #
-    def find_position(self, board):
-        #board.weighted = true
-        coords, scores = board.get_positions_and_scores(self)
-        if len(scores) > 0:
-            best_score = scores.index(max(scores))
-            return coords[best_score]
-        else: 
-            return None
-
+#Testovaci kod
 if __name__ == "__main__":
     board = [
      #   0 1 2 3 4 5 6 7

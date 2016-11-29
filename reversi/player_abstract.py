@@ -1,14 +1,8 @@
 #from __future__ import print_function
 from board import Board
-import sys
-if sys.version_info < (3, 0):
-    def console_input(prompt):
-        return raw_input(prompt)
-else:
-    def console_input(prompt):
-        return input(prompt)
-class MyPlayer:
-    '''Tento hrac vzdy sebere tolik kamenu, kolik muze. Bez planovani.'''
+
+class MyPlayer(object):
+    '''Abstraktni hrac, nic nedela'''
     MY_COLOR = 0
     HIS_COLOR = 1;
     NEUTRAL = 2
@@ -49,28 +43,9 @@ class MyPlayer:
                     if score>0:
                         return True
         return False
-    # prompts player to make a move via standard input
-    # todo: remove this after debug
-    def move_via_console(self, board):
-        board = self.wrap_board_if_needed(board)
-        zeman = "kunda"
-        fails = 3
-        while zeman=="kunda":
-            i,j = console_input("Enter two values:  ").split()
-            i = int(i)
-            j = int(j)
-            if board.is_valid_move([i, j], self):
-                return [i, j]
-            else:
-                fails-=1
-                if fails>0:
-                    print("Invalid move! Enter valid values - "+str(fails)+" attempts remaining.")
-                else:
-                    raise ValueError("Too many invalid move attempts!")  
-        #note: zeman still "kunda" tho, even after loop ends
         
     # Finds the most suitable position for placing a stone
-    # best position is such that yields most turned stones after execution
+    # best position decided by sub implementation
     #
     def find_position(self, board):
         raise NotImplementedError("This is abstract player. It cannot play.")

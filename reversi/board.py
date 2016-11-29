@@ -5,14 +5,14 @@ import copy
 class Board:
     EMPTY_ARRAY = []
     WEIGHTS = [
-        [99, -8,  8, 6, 6, 8, -8,99],
-        [-8,-24, -4,-3,-3,-4,-24,-8],
-        [ 8, -4,  7, 4, 4, 7, -4, 8],
-        [ 6, -3,  4, 0, 0, 4, -3, 6],
-        [ 6, -3,  4, 0, 0, 4, -3, 6],
-        [ 8, -4,  7, 4, 4, 7, -4, 8],
-        [-8,-24, -4,-3,-3,-4,-24,-8],
-        [99, -8,  8, 6, 6, 8, -8,99]
+        [999,-23, 19, 16, 16, 19,-23,999],
+        [-23,-24, -9, -7, -7, -9,-24,-23],
+        [ 19, -9,  9,  4,  4,  9, -9, 19],
+        [ 16, -7,  4,  1,  1,  4, -7, 16],
+        [ 16, -7,  4,  1,  1,  4, -7, 16],
+        [ 19, -9,  9,  4,  4,  9, -9, 19],
+        [-23,-24, -9, -7, -7, -9,-24,-23],
+        [999,-23, 19, 16, 16, 19,-23,999]
     ]
     def __init__(self, board):
         self.board = board
@@ -25,6 +25,7 @@ class Board:
         self.rows = len(board)
         self.cols = len(board[0])
         self.no_stones = self.rows*self.cols
+        self.weighted = False
     def set_players(self, a, b):
         self.players[0] = a
         self.players[1] = b
@@ -58,10 +59,10 @@ class Board:
             turned_fields = self.get_claim_stones(pos, player)
         if len(turned_fields)==0:
             raise ValueError("Invalid move at "+self.strpos(pos))
+        # add also the placed stone
+        turned_fields.append(pos);
         for field in turned_fields:
             self.board[field[0]][field[1]]=player.color
-        # do not forget to also actually place the stone
-        self.board[pos[0]][pos[1]] = player.color
         # switch turn if possible
         if self.players[0] is None:
             self.players[0]=player
@@ -73,12 +74,25 @@ class Board:
         
         # add fields to balance
         if self.stones[0]>=0:
-            turned_stones = len(turned_fields)
-            self.stones[cur_player_index] += turned_stones + 1
-            self.stones[self.currentTurn] -= turned_stones
-            # one stone was placed, therefore removed from free stones count
-            self.stones[2] -= 1
+             if self.weighted:
+                 value = self.stones_value(turned_fields)
+                 self.stones[cur_player_index] += value
+                 # value of stones excluding the value of stone the player placed, which was not lost
+                 self.stones[self.currentTurn] -= value-self.WEIGHTS[pos[0]][pos[1]]
+                 self.stones[2] -= 1
+             else:
+                 turned_stones = len(turned_fields)
+                 self.stones[cur_player_index] += turned_stones
+                 # newly placed stone was not lost, therefore -1
+                 self.stones[self.currentTurn] -= turned_stones-1
+                 # one stone was placed, therefore removed from free stones count
+                 self.stones[2] -= 1
         #self.cached_balance += (1 if player is self.players[0] else -1)*(len(turned_fields)+1)
+    def stones_value(self, placed_stones):
+        value = 0
+        for stone in placed_stones:
+            value += self.WEIGHTS[stone[0]][stone[1]]
+        return value
     def opponent(self, player):
         return self.players[0] if player==self.players[1] else self.players[1]
     def player_index(self, player):
@@ -197,6 +211,7 @@ class Board:
         result.stones = self.stones[:]
         result.players = self.players[:]
         result.currentTurn = self.currentTurn
+        result.weighted = self.weighted
         return result
         
     # returns list of stones that will change color if 

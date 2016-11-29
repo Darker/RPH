@@ -7,6 +7,8 @@ import math
 class MyPlayer(AbstractPlayer):
     '''This is player that tries to predict what the score will be next turn or more turns after that
        and picks option that yields best score when all enemy moves are just as likely
+       
+       This is typically called state space breadth first search.
     '''
     def find_position(self, board):
         (results, moves, boards) = self.best_future_score(board,950)
@@ -47,10 +49,10 @@ class MyPlayer(AbstractPlayer):
         # calculate result and return it as only result
         # rest arrays shall be empty
         if len(available_moves)==0:
-            balance = board.balance_from_cache(self)
+            balance = board.balance(self)
             # This makes the algorithm avoid branches that contain defeat
             # but it does not risk so much for victory
-            results.append(balance*3 if balance>0 else balance*8)
+            results.append(balance*50 if balance>0 else balance*1000)
             boards.append(board)
         else:
             move_index = 0
@@ -80,16 +82,20 @@ class MyPlayer(AbstractPlayer):
         
         enemy = self.enemy
         board.set_players(self, enemy)
+
         # we know that, lest this method wouldn't get called
         board.currentTurn = 0
         # used to stop before timeout
         start_time = time.clock()*1000
+        # measures time required to calculate each level of depth
+        level_time = start_time
+        last_level_duration = 0
         base_results, base_moves, base_boards = self.future_score(board, self)
         # temporary results that are added directly into `base_results` once
         # full level of breadth is finished
         tmp_results = []
         for i in base_results:
-            tmp_results.append(i)
+            tmp_results.append(0)
         # this will be filled with predictions, which will then spawn more predictions ad infinitum
         # prediction format: [list of results, list of moves, list of boards, player who played, level index, origin]
         #                 0             1           2            3     4   5
@@ -100,15 +106,24 @@ class MyPlayer(AbstractPlayer):
             # If new prediction's level is higher than current, put
             # tmp results in base results
             if prev_prediction[4]>level:
-                for i in range(0, len(base_results)):
-                    result = tmp_results[i]
-                    tmp_results[i] = 0
-                    # Still not sure if I should add or overwrite
-                    base_results[i] = result
+                if level>0:
+                    for i in range(0, len(base_results)):
+                        result = tmp_results[i]
+                        tmp_results[i] = 0
+                        # Still not sure if I should add or overwrite
+                        base_results[i] += result/(level*2)
                 succesful_level = level
                 print("Predicting LVL "+str(level)+" stats:\n    ", end="")
-                print(base_results)
+                self.print_prediction(base_results, base_moves)
                 level = prev_prediction[4]
+                # calculation of time
+                #time_now = time.clock()*1000 
+                #last_level_duration = time_now - level_time
+                #level_time = time_now
+                # if this level took more time to finish than the remaining time, 
+                # it's pointless to continue
+                #if last_level_duration>time_now-start_time:
+                #    break
             #print("Predicting LVL "+str(level)+" time remaining "+str(time_remains(start_time, timeout))+" ms")
             board_index = 0
             # for every possible board
@@ -139,6 +154,14 @@ class MyPlayer(AbstractPlayer):
             options_trees.pop(0)
         #print("Predict end last LVL "+str(succesful_level))
         return (base_results, base_moves, base_boards)
+    def print_prediction(self, predictions, base_moves):
+        index = 0
+        length = len(predictions)
+        while index<length:
+            print("    ",base_moves[index]," = ",predictions[index])
+            index+=1
+        
+        
 def haz_tim(start_time, timeout):
     if start_time<0 or timeout<0:
         return True
