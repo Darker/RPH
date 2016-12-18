@@ -1,18 +1,14 @@
 from email.parser import Parser
 from os import path
 from word import Word
+from utils import *
+import math
 
-import re
-HTML_ENDTAG = re.compile(r"<\s*/[a-z]+\s*>")
-URL = re.compile(r"https?://(www\.)?([^\s/\?@\">]+)[^\s\">]*")
-HTML_OPENTAG = re.compile(r"<([a-z]+)([^>a-z][^>]*|\s*/)?>")
-ENTITIES = re.compile(r"\&[a-z0-9]+\;")
-GARBAGE = re.compile(r"([^a-z-' ]|([^a-z]|^)[-' ]([^a-z]|$))")
-WORD = re.compile(r"([a-z]+([-'][a-z]+)?)")
+
 
 class Analyser(object):
     ''' Analyses emails and creates statistical image word spamliness '''
-    def __init__(self):
+    def __init__(self, parent):
         # Initialize memory of words
         # this will be map from word string to word class instance
         # This will contain:
@@ -27,6 +23,13 @@ class Analyser(object):
         # probabilities that a message is or isn't spam
         self.PrS = 0.750814332247557
         self.PrH = 0.249185667752443
+        self.p_treshold = 0.7
+        
+        self.emails = 0
+        self.spams = 0
+        self.hams = 0
+        
+        self.filter = parent
         
     def learn_all(self, truth_file):
         dirname = path.dirname(path.realpath(truth_file))
@@ -42,13 +45,36 @@ class Analyser(object):
                 else:
                     hams+=1
                 self.learn_from_file(path.join(dirname, info[0]), is_spam)
+                
+        self.emails = spams + hams
+        self.spams = spams
+        self.hams = hams
+                
+        print("Dropping rare and boring words: ")
+        common_words = ["a", "the", "you", "for", "if", "me", "us"]
+        for word, stats in list(self.words.items()):
+            if stats.occurences<5:
+                del self.words[word]
+                continue
+            if math.fabs(stats.PrWS-0.5)<0.1:
+                del self.words[word]
+                continue
+            if word in common_words:
+                del self.words[word]
+                continue
+        
         print("Spams: ", spams)
         print("Hams: ", hams)
         self.PrS = spams/(spams+hams)
-        self.PrH = hams/(spams+hams)
+        # In this case, it's always much better to assume 
+        # that a message is not spam
+        if self.PrS>0.2:
+            self.PrS=0.2
+        self.PrH = 1-self.PrS
         print("PrS =", self.PrS)
         print("PrH =", self.PrH)
-        self.nerdy_stats()
+        print("\n")
+        #self.nerdy_stats()
     def nerdy_stats(self):
         wordlist = self.words.values()
         print("Total words: ", len(wordlist)) 
@@ -63,70 +89,18 @@ class Analyser(object):
              if it>20:
                  break   
         
-    # opens file
-    # if file is multipart message, calls learn_from message for 
-    # HTML/TEXT content of message, HTML is preffered
-    # if file is single part, just passes the message
-    # to learn_from_message
+
     def learn_from_file(self, filename, is_spam):
-        # Opens file and parses email
-        email = Parser().parse(open(filename, 'r'))
-        email.filename = filename
-        # For multipart emails, all bodies will be handled in a loop
-        if email.is_multipart():
-            for msg in email.get_payload():
-                msg.filename = filename
-                self.learn_from_message(msg, is_spam)
-        else:
-            # Single part message is passed diractly
-            self.learn_from_message(email, is_spam)
+        self.learn_from_list(wordlist_file(filename), is_spam)
 
     def learn_from_message(self, email, is_spam):
-        payload = email.get_payload(decode=True)
-        if payload is None:
-            print("Error - no body in "+email.filename)
-            return
-        # The payload is binary. It must be converted to
-        # python string depending in input charset
-        # Input charset may vary, based on message
-        try:
-            text = payload.decode("utf-8")
-            self.learn_from_text(text, is_spam)
-        except UnicodeDecodeError:
-            print("Error: cannot parse message "+email.filename+" as UTF-8")
-            return  
-        #print(text.encode("utf-8"))
-        #raise ValueError("Fuck it I'm goin' home.")
+        self.learn_from_list(wordlist_message(email), is_spam)
     def learn_from_text(self, text, is_spam):
-        
-        text = text.lower()
-        text = text.replace("\n", "")
-        text = HTML_ENDTAG.sub("", text)
-        # Remember all link domains mentioned here:
-        for link in URL.finditer(text):
-            #print("Matched link: ", link.group(0), " - domain:"+link.group(2))
-            self.increment_word("URL:"+link.group(2), is_spam)
-        # remove the links
-        text = URL.sub("", text)
-        # remember all HTML tags
-        for link in HTML_OPENTAG.finditer(text):
-            #print("Matched HTML tag: <"+link.group(1)+">")
-            self.increment_word("<"+link.group(1)+">", is_spam)
-        # remove the tags
-        text = HTML_OPENTAG.sub("", text)
-        original_text = text
-        text = ENTITIES.sub("", text)
-        # clean the remaining garbage away:
-        text = GARBAGE.sub(" ", text)
-        for word in WORD.finditer(text):
-            #print("Matched word: "+word.group(1))
-            self.increment_word(word.group(1), is_spam)
-            if False and word.group(1)=="nbsp":
-                print("\nORIGINAL TEXT:\n\n")
-                print(original_text)
-                print("\nFINAL TEXT:\n\n")
-                print(text)
-                raise ValueError("Invalid parsing.")
+        self.learn_from_list(wordlist_text(text), is_spam)
+    def learn_from_list(self, words, is_spam):
+        for word in words:
+            self.increment_word(word, is_spam)
+
     def increment_word(self, word, is_spam):
         try:
             self.words[word].increment(is_spam)
@@ -134,6 +108,3 @@ class Analyser(object):
         except KeyError:
             self.words[word] = Word(word, is_spam)
 
-if __name__=="__main__":
-    f = Filter()
-    f.learn_all("./emails/1/!truth.txt")

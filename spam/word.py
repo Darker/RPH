@@ -23,7 +23,7 @@ class Word(object):
         return self.spam/self.occurences
     @property
     def PrWH(self):
-        return self.ham/self.occurence
+        return self.ham/self.occurences
         
     def printme(self):
         print(self.word + " ("+str(self.occurences)+" | "+ANSI.RED+str(self.spam)+ANSI.RESET+" | "+ANSI.GREEN+str(self.ham)+ANSI.RESET+")")
