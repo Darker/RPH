@@ -1,117 +1,41 @@
+from __future__ import print_function
+from word import Word
+from spam_analyser import Analyser
+from spam_classifier import Classifier
 from email.parser import Parser
 from os import path
-from word import Word
 
-import re
-HTML_ENDTAG = re.compile(r"<\s*/[a-z]+\s*>")
-URL = re.compile(r"https?://(www\.)?([^\s/\?@\">]+)[^\s\">]*")
-HTML_OPENTAG = re.compile(r"<([a-z]+)([^>a-z][^>]*|\s*/)?>")
-ENTITIES = re.compile(r"\&[a-z0-9]+\;")
-GARBAGE = re.compile(r"([^a-z-' ]|([^a-z]|^)[-' ]([^a-z]|$))")
-WORD = re.compile(r"([a-z]+([-'][a-z]+)?)")
+from utils import *
+from corpus import Corpus
 
 class Filter(object):
-
+    ''' Learns from messages and classifies unknown messages '''
     def __init__(self):
-        # Initialize memory of words
-        # this will be map from word string to word class instance
-        # This will contain:
-        #   - links (only domain names though)
-        #   - regular words - [a-z']
-        #   - HTML tags, as <tagname>
-        self.words = {}
-        # This is similar to words, but remembers 
-        # number of links in message and correlates them with it being spam
-        #  not used yet because I dunno how to do the math
-        self.link_counts = {}
+        self.analyser = Analyser(self)
+        self.classifier = Classifier(self.analyser)
         
-    def learn_all(self, truth_file):
-        dirname = path.dirname(path.realpath(truth_file))
-        print("Reading learning materials from '"+dirname+"'")
-        with open(truth_file) as openfileobject:
-            for line in openfileobject:
-                info = line.split(" ")
-                self.learn_from_file(path.join(dirname, info[0]), not info[1].startswith("OK"))
-        self.nerdy_stats()
-    def nerdy_stats(self):
-        wordlist = self.words.values()
-        print("Total words: ", len(wordlist)) 
-        print("Most spammy words: ")
-        
-        sorted_by_spam = sorted(wordlist, key=lambda x: -x.spam+x.ham)
-        
-        it = 0
-        for word in sorted_by_spam:
-             word.printme()
-             it+=1
-             if it>20:
-                 break   
-        
-    # opens file
-    # if file is multipart message, calls learn_from message for 
-    # HTML/TEXT content of message, HTML is preffered
-    # if file is single part, just passes the message
-    # to learn_from_message
-    def learn_from_file(self, filename, is_spam):
-        email = Parser().parse(open(filename, 'r'))
-        email.filename = filename
-        if email.is_multipart():
-            for msg in email.get_payload():
-                msg.filename = filename
-                self.learn_from_message(msg, is_spam)
+    
+    def train(self, directory):
+        truth_file = path.join(directory, "!truth.txt")
+        if path.isfile(truth_file):
+            self.analyser.learn_all(truth_file)
         else:
-            self.learn_from_message(email, is_spam)
-
-    def learn_from_message(self, email, is_spam):
-        payload = email.get_payload(decode=True)
-        if payload is None:
-            print("Error - no body in "+email.filename)
-            return
-        try:
-            text = payload.decode("utf-8")
-            self.learn_from_text(text, is_spam)
-        except UnicodeDecodeError:
-            print("Error: cannot parse message "+email.filename+" as UTF-8")
-            return  
-        #print(text.encode("utf-8"))
-        #raise ValueError("Fuck it I'm goin' home.")
-    def learn_from_text(self, text, is_spam):
-        
-        text = text.lower()
-        text = text.replace("\n", "")
-        text = HTML_ENDTAG.sub("", text)
-        # Remember all link domains mentioned here:
-        for link in URL.finditer(text):
-            #print("Matched link: ", link.group(0), " - domain:"+link.group(2))
-            self.increment_word("URL:"+link.group(2), is_spam)
-        # remove the links
-        text = URL.sub("", text)
-        # remember all HTML tags
-        for link in HTML_OPENTAG.finditer(text):
-            #print("Matched HTML tag: <"+link.group(1)+">")
-            self.increment_word("<"+link.group(1)+">", is_spam)
-        # remove the tags
-        text = HTML_OPENTAG.sub("", text)
-        original_text = text
-        text = ENTITIES.sub("", text)
-        # clean the remaining garbage away:
-        text = GARBAGE.sub(" ", text)
-        for word in WORD.finditer(text):
-            #print("Matched word: "+word.group(1))
-            self.increment_word(word.group(1), is_spam)
-            if False and word.group(1)=="nbsp":
-                print("\nORIGINAL TEXT:\n\n")
-                print(original_text)
-                print("\nFINAL TEXT:\n\n")
-                print(text)
-                raise ValueError("Invalid parsing.")
-    def increment_word(self, word, is_spam):
-        try:
-            self.words[word].increment(is_spam)
-            #print("Incremented word "+word)
-        except KeyError:
-            self.words[word] = Word(word, is_spam)
+           raise ValueError("Invalid path to corpus directory, truth file not found.")
+    def test(self, directory):
+        c = Corpus(directory)
+        with open(path.join(directory, "!prediction.txt"), 'w', encoding="utf-8") as output:
+            for (filename, wordlist) in c.wordlists():
+                prob_spam = self.classifier.prob_list(wordlist)
+                is_spam = prob_spam>=self.analyser.p_treshold
+                tag = "SPAM" if is_spam else "OK"
+                output.write(filename+" "+tag+"\n")
 
 if __name__=="__main__":
     f = Filter()
-    f.learn_all("./emails/1/!truth.txt")
+    f.train("./emails/2/")
+    print("Prob for unknown word: ", f.classifier.PrSW("dsgfdgf"))
+    print("Prob for spam word: ", f.classifier.PrSW("<br>"))
+    print("Prob for 'URL:geocities.com': ", f.classifier.PrSW("URL:geocities.com"))
+
+    f.test("./emails/1/")
+    

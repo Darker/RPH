@@ -15,12 +15,15 @@ class Word(object):
             self.spam += 1
         else:
             self.ham += 1
+    # Method names inspured by bayes formula
+    # See mroe here:
+    # https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering#Computing_the_probability_that_a_message_containing_a_given_word_is_spam
     @property
-    def spam_prob(self):
+    def PrWS(self):
         return self.spam/self.occurences
     @property
-    def ham_prob(self):
-        return self.ham/self.occurence
+    def PrWH(self):
+        return self.ham/self.occurences
         
     def printme(self):
         print(self.word + " ("+str(self.occurences)+" | "+ANSI.RED+str(self.spam)+ANSI.RESET+" | "+ANSI.GREEN+str(self.ham)+ANSI.RESET+")")
